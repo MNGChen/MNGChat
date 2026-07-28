@@ -1,0 +1,167 @@
+/* 背景 */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  
+}
+
+/* 卡片 */
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  transition: 0.3s;
+}
+
+.login-card:hover {
+  transform: translateY(-4px);
+}
+
+/* 标题 */
+.login-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-header h2 {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.login-header p {
+  color: #6b7280;
+  margin-top: 6px;
+}
+
+/* 表单 */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 输入框 */
+.input-group {
+  display: flex;
+  align-items: center;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 10px;
+  border: 1px solid transparent;
+  transition: 0.2s;
+}
+
+.input-group svg {
+  margin-right: 10px;
+  color: #9ca3af;
+}
+
+.input-group input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+}
+
+.input-group:focus-within {
+  border: 1px solid #6366f1;
+  background: white;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+}
+
+/* 忘记密码 */
+.forgot {
+  text-align: right;
+}
+
+.forgot a {
+  font-size: 13px;
+  color: #6366f1;
+}
+
+/* 主按钮 */
+.main-btn {
+  background: black;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.main-btn:hover {
+  background: #1f2937;
+  transform: scale(1.02);
+}
+
+/* 分割线 */
+.divider {
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  height: 1px;
+  background: #e5e7eb;
+  position: absolute;
+  top: 50%;
+  width: 40%;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.divider span {
+  background: white;
+  padding: 0 10px;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* 第三方登录 */
+.social-login {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.social-login button {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.social-login button:hover {
+  background: #f9fafb;
+}
+
+/* 切换 */
+.switch {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.switch span {
+  color: #6366f1;
+  cursor: pointer;
+  font-weight: 600;
+}
