@@ -4,9 +4,7 @@ A modern AI chat web application built with React 19 and Vite, featuring multi-s
 
 ## Backend
 
-The backend is built with Spring Boot and provides RESTful APIs.
-
-**Backend Repository:** https://github.com/MNGChen/MNGChat_Backend.git
+The **[backend](https://github.com/MNGChen/MNGChat_Backend.git)**  is built with Spring Boot and provides RESTful APIs.
 
 ## Features
 
