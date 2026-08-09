@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { FaImage, FaPaperPlane, FaPlus, FaRegCommentDots } from "react-icons/fa";
+import { FaImage, FaPaperPlane, FaPlus, FaRegCommentDots, FaSlidersH, FaTrash } from "react-icons/fa";
 import "./ChatTool.css";
+
+const PRESETS_STORAGE_KEY = "mng-chat-presets";
+
+const defaultPresets = [
+  { id: "helpful-assistant", name: "Helpful assistant", systemPrompt: "You are a helpful, clear, and concise assistant.", temperature: 0.7 },
+  { id: "creative", name: "Creative", systemPrompt: "You are a creative brainstorming partner. Offer original, practical ideas.", temperature: 1.1 },
+  { id: "precise", name: "Precise", systemPrompt: "You are a precise assistant. Be factual, structured, and state uncertainty clearly.", temperature: 0.2 },
+];
+
+const getSavedPresets = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PRESETS_STORAGE_KEY));
+    return Array.isArray(saved) ? saved : defaultPresets;
+  } catch {
+    return defaultPresets;
+  }
+};
 
 function MNGChatTool() {
   const [input, setInput] = useState("");
@@ -13,6 +30,12 @@ function MNGChatTool() {
   const [editingTitle, setEditingTitle] = useState("");
   const [deletingSessionId, setDeletingSessionId] = useState(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [systemPrompt, setSystemPrompt] = useState("");
+  const [temperature, setTemperature] = useState(0.7);
+  const [presets, setPresets] = useState(getSavedPresets);
+  const [selectedPresetId, setSelectedPresetId] = useState("");
+  const [presetName, setPresetName] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
   const fileInputRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -90,6 +113,85 @@ function MNGChatTool() {
     }
 
     setMessages(data.map(normalizeMessage));
+  };
+
+  const loadPresets = async () => {
+    try {
+      const response = await fetch(`${API_URL}/chat/presets`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Unable to load presets");
+
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setPresets(data);
+        localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(data));
+      }
+    } catch {
+      // Keep the last locally cached presets available when the API is unavailable.
+    }
+  };
+
+  const applyPreset = (presetId) => {
+    const preset = presets.find((item) => item.id === presetId);
+    if (!preset) return;
+    setSelectedPresetId(preset.id);
+    setSystemPrompt(preset.systemPrompt);
+    setTemperature(preset.temperature);
+  };
+
+  const savePreset = async () => {
+    const name = presetName.trim();
+    if (!name) return;
+
+    const presetDraft = {
+      name,
+      systemPrompt,
+      temperature,
+    };
+
+    let preset = { id: `${Date.now()}-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, ...presetDraft };
+
+    try {
+      const response = await fetch(`${API_URL}/chat/presets`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(presetDraft),
+      });
+      if (response.ok) {
+        preset = await response.json();
+      }
+    } catch {
+      // The local cache still lets users keep a preset while offline.
+    }
+
+    const updatedPresets = [...presets, preset];
+    setPresets(updatedPresets);
+    localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(updatedPresets));
+    setSelectedPresetId(preset.id);
+    setPresetName("");
+  };
+
+  const deletePreset = async () => {
+    if (!selectedPresetId) return;
+
+    try {
+      await fetch(`${API_URL}/chat/presets/${selectedPresetId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch {
+      // Remove locally as well, so the selected preset is no longer offered.
+    }
+
+    const updatedPresets = presets.filter((preset) => preset.id !== selectedPresetId);
+    setPresets(updatedPresets);
+    localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(updatedPresets));
+    setSelectedPresetId("");
   };
 
   const createNewChat = async () => {
@@ -200,6 +302,8 @@ function MNGChatTool() {
           message: currentInput,
           sessionId,
           model: selectedModel,
+          systemPrompt,
+          temperature,
         }),
       });
 
@@ -225,6 +329,7 @@ function MNGChatTool() {
   useEffect(() => {
     loadSessions();
     loadModels();
+    loadPresets();
   }, []);
 
   return (
@@ -294,21 +399,71 @@ function MNGChatTool() {
       <main className="main-chat">
         <header className="chat-header">
           <h3>MNG Chat Tool</h3>
-          <div className="model-picker">
-            <label htmlFor="model-select">Model</label>
-            <select
-              id="model-select"
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
+          <div className="header-controls">
+            <div className="model-picker">
+              <label htmlFor="model-select">Model</label>
+              <select
+                id="model-select"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+              >
+                {models.map((model) => (
+                  <option key={model} value={model}>
+                    {formatModelLabel(model)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              className={`settings-toggle ${showSettings ? "active" : ""}`}
+              onClick={() => setShowSettings((visible) => !visible)}
+              aria-expanded={showSettings}
+              aria-controls="chat-settings"
             >
-              {models.map((model) => (
-                <option key={model} value={model}>
-                  {formatModelLabel(model)}
-                </option>
-              ))}
-            </select>
+              <FaSlidersH /> Settings
+            </button>
           </div>
         </header>
+
+        {showSettings ? (
+          <section id="chat-settings" className="chat-settings" aria-label="Chat settings">
+            <div className="settings-field preset-field">
+              <label htmlFor="preset-select">Presets</label>
+              <div className="preset-row">
+                <select id="preset-select" value={selectedPresetId} onChange={(e) => applyPreset(e.target.value)}>
+                  <option value="">Select a preset</option>
+                  {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+                </select>
+                <button type="button" className="delete-preset-btn" onClick={deletePreset} disabled={!selectedPresetId} title="Delete selected preset" aria-label="Delete selected preset">
+                  <FaTrash />
+                </button>
+              </div>
+            </div>
+
+            <div className="settings-field prompt-field">
+              <label htmlFor="system-prompt">System prompt</label>
+              <textarea
+                id="system-prompt"
+                value={systemPrompt}
+                onChange={(e) => { setSystemPrompt(e.target.value); setSelectedPresetId(""); }}
+                placeholder="Set the assistant's role, tone, and instructions..."
+                rows="3"
+              />
+            </div>
+
+            <div className="settings-field temperature-field">
+              <div className="temperature-label-row"><label htmlFor="temperature">Temperature</label><output htmlFor="temperature">{temperature.toFixed(1)}</output></div>
+              <input id="temperature" type="range" min="0" max="2" step="0.1" value={temperature} onChange={(e) => { setTemperature(Number(e.target.value)); setSelectedPresetId(""); }} />
+              <div className="temperature-hint"><span>Focused</span><span>Creative</span></div>
+            </div>
+
+            <div className="save-preset-row">
+              <input value={presetName} onChange={(e) => setPresetName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && savePreset()} placeholder="Name this preset" aria-label="Preset name" />
+              <button type="button" onClick={savePreset} disabled={!presetName.trim()}>Save preset</button>
+            </div>
+          </section>
+        ) : null}
 
         <div className="messages-wrapper">
           {messages.length === 0 ? (
