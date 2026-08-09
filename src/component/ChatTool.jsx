@@ -2,14 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { FaImage, FaPaperPlane, FaPlus, FaRegCommentDots, FaSlidersH, FaTrash } from "react-icons/fa";
 import "./ChatTool.css";
 
+// Presets are cached locally so the settings remain usable if the API is unavailable.
 const PRESETS_STORAGE_KEY = "mng-chat-presets";
 
+// Built-in examples shown before a user has any saved presets.
 const defaultPresets = [
   { id: "helpful-assistant", name: "Helpful assistant", systemPrompt: "You are a helpful, clear, and concise assistant.", temperature: 0.7 },
   { id: "creative", name: "Creative", systemPrompt: "You are a creative brainstorming partner. Offer original, practical ideas.", temperature: 1.1 },
   { id: "precise", name: "Precise", systemPrompt: "You are a precise assistant. Be factual, structured, and state uncertainty clearly.", temperature: 0.2 },
 ];
 
+// Read the local fallback without breaking the chat if storage contains invalid data.
 const getSavedPresets = () => {
   try {
     const saved = JSON.parse(localStorage.getItem(PRESETS_STORAGE_KEY));
@@ -20,6 +23,7 @@ const getSavedPresets = () => {
 };
 
 function MNGChatTool() {
+  // Main UI state: current input, conversation data, model/settings, and loading states.
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -56,6 +60,7 @@ function MNGChatTool() {
     fileUrl: msg.fileUrl ?? "",
   });
 
+  // A session must exist before messages or uploads can be saved on the server.
   const createSessionOnServer = async () => {
     const res = await fetch(`${API_URL}/chat/session`, {
       method: "POST",
@@ -76,6 +81,7 @@ function MNGChatTool() {
     return createSessionOnServer();
   };
 
+  // Load the current user's recent conversation list.
   const loadSessions = async () => {
     const res = await fetch(`${API_URL}/chat/sessions`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -84,6 +90,7 @@ function MNGChatTool() {
     setSessions(data);
   };
 
+  // Use the backend model list, with a small fallback for temporary API failures.
   const loadModels = async () => {
     try {
       const res = await fetch(`${API_URL}/chat/models`, {
@@ -100,6 +107,7 @@ function MNGChatTool() {
     }
   };
 
+  // Select a conversation and replace the message area with its stored history.
   const loadHistory = async (sessionId) => {
     setCurrentSessionId(sessionId);
     const res = await fetch(`${API_URL}/chat/history?sessionId=${sessionId}`, {
@@ -115,6 +123,7 @@ function MNGChatTool() {
     setMessages(data.map(normalizeMessage));
   };
 
+  // Server presets are the source of truth; local storage is only a fallback cache.
   const loadPresets = async () => {
     try {
       const response = await fetch(`${API_URL}/chat/presets`, {
@@ -133,6 +142,7 @@ function MNGChatTool() {
     }
   };
 
+  // Applying a preset updates the controls used for the next chat request.
   const applyPreset = (presetId) => {
     const preset = presets.find((item) => item.id === presetId);
     if (!preset) return;
@@ -141,6 +151,7 @@ function MNGChatTool() {
     setTemperature(preset.temperature);
   };
 
+  // Save the current prompt and temperature under a user-provided name.
   const savePreset = async () => {
     const name = presetName.trim();
     if (!name) return;
@@ -176,6 +187,7 @@ function MNGChatTool() {
     setPresetName("");
   };
 
+  // Remove the selected preset from both the account and the local cache.
   const deletePreset = async () => {
     if (!selectedPresetId) return;
 
@@ -249,6 +261,7 @@ function MNGChatTool() {
     }
   };
 
+  // Upload images separately so they appear in the conversation history as messages.
   const uploadImage = async (file) => {
     if (!file) return;
 
@@ -282,6 +295,7 @@ function MNGChatTool() {
     }
   };
 
+  // Show the user's message immediately, then ask the backend for the AI reply.
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -326,6 +340,7 @@ function MNGChatTool() {
     }
   };
 
+  // Populate the chat screen once when the component opens.
   useEffect(() => {
     loadSessions();
     loadModels();

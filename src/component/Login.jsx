@@ -3,6 +3,7 @@ import { FaUser, FaLock, FaEnvelope, FaGithub, FaGoogle } from 'react-icons/fa';
 
 import './Login.css';
 
+// Login and registration page. A successful response stores the JWT for later API calls.
 function MNGLoginPage() {
 
   const API_URL =  import.meta.env.VITE_API_BASE_URL ;
@@ -14,6 +15,7 @@ function MNGLoginPage() {
     password: '',
   });
 
+  // Send the form to the appropriate authentication endpoint.
   const handleSubmit = async (e) => {
     e.preventDefault();
     const url = isLogin ? `${API_URL}/login` : `${API_URL}/register`;
@@ -51,6 +53,7 @@ function MNGLoginPage() {
     }
   };
 
+  // Keep all form inputs in one state object.
   const handleInputChange = (e) => {
     setFormData({
       ...formData,

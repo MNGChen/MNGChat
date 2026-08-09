@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./ChatAdmin.css";
 
+// Admin-only dashboard for reviewing chat and token usage across accounts.
 function MNGChatAdmin() {
   const API_URL = import.meta.env.VITE_API_BASE_URL;
   const token = localStorage.getItem("token");
@@ -28,6 +29,7 @@ function MNGChatAdmin() {
     }).format(date);
   };
 
+  // Backend errors may be JSON or plain text, so handle both formats for display.
   const parseErrorMessage = async (response) => {
     const contentType = response.headers.get("content-type") || "";
 
@@ -49,6 +51,7 @@ function MNGChatAdmin() {
     }
   };
 
+  // Retrieve protected usage data and turn common authorization errors into clear UI states.
   const loadUsage = useCallback(async () => {
     if (!token) {
       setError("Please log in first.");

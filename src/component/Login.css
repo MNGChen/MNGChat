@@ -1,4 +1,5 @@
 /* 背景 */
+/* Visual layout for the sign-in and registration form. */
 .login-container {
   min-height: 100vh;
   display: flex;
