@@ -152,6 +152,9 @@ The frontend expects the following backend API endpoints:
 | PATCH  | `/chat/session/:id/title`        | Rename a session               |
 | DELETE | `/chat/session/:id`              | Delete a session               |
 | POST   | `/chat/session/:id/image`        | Upload an image to a session   |
+| GET    | `/chat/presets`                  | List saved chat presets        |
+| POST   | `/chat/presets`                  | Save a chat preset             |
+| DELETE | `/chat/presets/:id`              | Delete a chat preset           |
 
 ### Admin
 
